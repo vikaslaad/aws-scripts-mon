@@ -511,11 +511,19 @@ if ($report_mem_util || $report_mem_used || $report_mem_avail || $report_swap_ut
   my $mem_free = $meminfo{'MemFree'} * KILO;
   my $mem_cached = $meminfo{'Cached'} * KILO;
   my $mem_buffers = $meminfo{'Buffers'} * KILO;
-  my $mem_avail = $meminfo{'MemAvailable'} * KILO;
-  #my $mem_avail = $mem_free;
-  #if (!defined($mem_used_incl_cache_buff)) {
-  #   $mem_avail += $mem_cached + $mem_buffers;
-  #}
+  my $mem_avail = $mem_free;
+
+  my $operating_system = `hostnamectl | grep Operating`;
+  my $is_os_rhel7 = 0;
+  #if its rhel7 read MemAvailable field
+  if (index($operating_system, "Red Hat Enterprise Linux Server 7") != -1) {
+    $mem_avail = $meminfo{'MemAvailable'} * KILO;
+    $is_os_rhel7 = 1;
+  }
+
+  if (!defined($mem_used_incl_cache_buff) && !$is_os_rhel7) {
+     $mem_avail += $mem_cached + $mem_buffers;
+  }
   my $mem_used = $mem_total - $mem_avail;
   my $swap_total = $meminfo{'SwapTotal'} * KILO;
   my $swap_free = $meminfo{'SwapFree'} * KILO;  
